@@ -47,7 +47,7 @@ func testReader(t *testing.T, s []byte) {
 					t.Fatal(err)
 				}
 				if fcount != 2 {
-					t.Fatal("Embeded file missing", j, fcount, err)
+					t.Fatal("Embedded file missing", j, fcount, err)
 				}
 				break // No more files
 			}
