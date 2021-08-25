@@ -1,9 +1,10 @@
 package zipstream
 
 import (
-	"archive/zip"
 	"hash"
 	"io"
+
+	"github.com/klauspost/compress/zip"
 )
 
 type crcReader struct {

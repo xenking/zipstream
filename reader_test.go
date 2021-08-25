@@ -1,12 +1,13 @@
 package zipstream
 
 import (
-	"archive/zip"
 	"bytes"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"testing"
+
+	"github.com/klauspost/compress/zip"
 )
 
 func TestReader(t *testing.T) {
@@ -18,6 +19,11 @@ func TestReader(t *testing.T) {
 }
 
 func testReader(t *testing.T, s []byte) {
+	testReaderNonce(t, s, "")
+	testReaderNonce(t, s, "nonce")
+}
+
+func testReaderNonce(t *testing.T, s []byte, nonce string) {
 
 	var wbuf bytes.Buffer
 	for j := 0; j < 2; j++ {
@@ -37,7 +43,9 @@ func testReader(t *testing.T, s []byte) {
 		}
 	}
 
-	zr := NewReader(&wbuf)
+	var nonceBuf bytes.Buffer
+	nonceBuf.WriteString(nonce)
+	zr := NewReader(io.MultiReader(&nonceBuf, &wbuf))
 	for j := 0; j < 2; j++ {
 		fcount := 0
 		for {
@@ -59,6 +67,66 @@ func testReader(t *testing.T, s []byte) {
 			if bytes.Compare(s, s2) != 0 {
 				t.Fatal("Decompressed data does not match original")
 			}
+		}
+	}
+}
+
+func TestHeaderShortRead(t *testing.T) {
+	zbuf := bytes.Buffer{}
+	zwtr := zip.NewWriter(&zbuf)
+	zw, err := zwtr.Create("tmp.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//Write file 1
+	if _, err := zw.Write([]byte(`<poc><firstName>Juan</firstName><lastName>RodRiehakelkjd lkbug</lastName><department>Engineering Department</department></poc>`)); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := io.Copy(zw, io.LimitReader(rand.New(rand.NewSource(1)), 16384)); err != nil {
+		t.Fatal(err)
+	}
+
+	zw, err = zwtr.Create("tmp.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//Write file 2
+	if _, err := zw.Write([]byte(`{"proc":{"firstName":"Juan","lastName":"RodRiehakelkjd","department":"Engineering Department"}}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := io.Copy(zw, io.LimitReader(rand.New(rand.NewSource(3)), 16384)); err != nil {
+		t.Fatal(err)
+	}
+
+	//Close the zip writer
+	if err := zwtr.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	//Find the second magic marker so we can test the header break issue
+	idx := bytes.Index(zbuf.Bytes()[4:], []byte{0x50, 0x4b, 0x03, 0x04})
+	if idx < 0 {
+		panic("Unable to find magic file marker")
+	}
+
+	//Get the magic marker
+	//b := zbuf.Bytes()[:idx+4]
+	b := zbuf.Bytes()
+	b = b[:idx+6]
+
+	//Read
+	zr := NewReader(bytes.NewReader(b))
+	for {
+		//We are waiting for an unexepected EOF
+		_, err := zr.Next()
+		if err == io.ErrUnexpectedEOF {
+			break
+		} else if err != nil {
+			t.Fatal(err.Error())
 		}
 	}
 }
