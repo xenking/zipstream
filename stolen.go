@@ -7,7 +7,6 @@ package zipstream
 // license that can be found in the LICENSE file.
 
 import (
-	"compress/flate"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -15,6 +14,8 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/klauspost/compress/flate"
 )
 
 // #### struct.go
