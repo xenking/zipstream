@@ -3,6 +3,9 @@
 [![Build Status](https://app.travis-ci.com/xenking/zipstream.svg?branch=master)](https://app.travis-ci.com/xenking/zipstream)
 [![Go Reference](https://pkg.go.dev/badge/github.com/xenking/zipstream.svg)](https://pkg.go.dev/github.com/xenking/zipstream)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xenking/zipstream)](https://goreportcard.com/report/github.com/xenking/zipstream)
+[![codecov](https://codecov.io/gh/xenking/zipstream/branch/master/graph/badge.svg)](https://codecov.io/gh/xenking/zipstream)
+
+
 Enables zip file streaming from an io.Reader.
 Now with ZIP64 support.
 
